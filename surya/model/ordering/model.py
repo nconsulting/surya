@@ -33,6 +33,15 @@ def load_model(checkpoint=settings.ORDER_MODEL_CHECKPOINT, device=settings.TORCH
         model = torch.nn.DataParallel(model, device_ids = [0,1]).to(device)
     else:
         model = model.to(device)
+
+    # Since if the model is wrapped by the `DataParallel` class, you won't be able to access its attributes
+    # unless you write `model.module` which breaks the code compatibility. We use `model_attr_accessor` for attributes
+    # accessing only.
+    if isinstance(model, DataParallel):
+        self.model_attr_accessor = model.module
+    else:
+        self.model_attr_accessor = model
+    
     model = model.eval()
     print(f"Loaded reading order model {checkpoint} on device {device} with dtype {dtype}")
     return model
