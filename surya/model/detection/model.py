@@ -25,7 +25,11 @@ from surya.settings import settings
 def load_model(checkpoint=settings.DETECTOR_MODEL_CHECKPOINT, device=settings.TORCH_DEVICE_MODEL, dtype=settings.MODEL_DTYPE):
     config = EfficientViTConfig.from_pretrained(checkpoint)
     model = EfficientViTForSemanticSegmentation.from_pretrained(checkpoint, torch_dtype=dtype, config=config, ignore_mismatched_sizes=True)
-    model = model.to(device)
+    #model = model.to(device)
+    if device == "cuda":
+        model = torch.nn.DataParallel(model, device_ids = [0,1]).to(device)
+    else:
+        model = model.to(device)
     model = model.eval()
     print(f"Loaded detection model {checkpoint} on device {device} with dtype {dtype}")
     return model
