@@ -28,7 +28,11 @@ def load_model(checkpoint=settings.ORDER_MODEL_CHECKPOINT, device=settings.TORCH
     assert isinstance(model.decoder, MBartOrder)
     assert isinstance(model.encoder, VariableDonutSwinModel)
 
-    model = model.to(device)
+    #model = model.to(device)
+    if device == "cuda":
+        model = torch.nn.DataParallel(model, device_ids = [0,1]).to(device)
+    else:
+        model = model.to(device)
     model = model.eval()
     print(f"Loaded reading order model {checkpoint} on device {device} with dtype {dtype}")
     return model
