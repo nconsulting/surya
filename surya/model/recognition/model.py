@@ -42,7 +42,11 @@ def load_model(checkpoint=settings.RECOGNITION_MODEL_CHECKPOINT, device=settings
     assert isinstance(model.encoder, DonutSwinModel)
     assert isinstance(model.text_encoder, SuryaOCRTextEncoder)
 
-    model = model.to(device)
+    #model = model.to(device)
+    if device == "cuda":
+        model = torch.nn.DataParallel(model, device_ids = [0,1]).to(device)
+    else:
+        model = model.to(device)
     model = model.eval()
 
     print(f"Loaded recognition model {checkpoint} on device {device} with dtype {dtype}")
