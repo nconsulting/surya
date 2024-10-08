@@ -183,7 +183,7 @@ def parallel_get_regions(heatmaps: List[np.ndarray], orig_size, id2label, detect
 
 def batch_layout_detection(images: List, model, processor, detection_results: Optional[List[TextDetectionResult]] = None, batch_size=None) -> List[LayoutResult]:
     preds, orig_sizes = batch_detection(images, model, processor, batch_size=batch_size)
-    id2label = model.config.id2label
+    id2label = model.module.config.id2label
 
     results = []
     if settings.IN_STREAMLIT or len(images) < settings.DETECTOR_MIN_PARALLEL_THRESH: # Ensures we don't parallelize with streamlit or too few images

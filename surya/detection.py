@@ -30,7 +30,7 @@ def batch_detection(images: List, model: EfficientViTForSemanticSegmentation, pr
     assert all([isinstance(image, Image.Image) for image in images])
     if batch_size is None:
         batch_size = get_batch_size()
-    heatmap_count = model.config.num_labels
+    heatmap_count = model.module.config.num_labels
 
     images = [image.convert("RGB") for image in images]  # also copies the images
 

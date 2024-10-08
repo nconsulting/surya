@@ -61,7 +61,7 @@ def batch_recognition(images: List, languages: List[List[str] | None], model, pr
 
         batch_pixel_values = processed_batch["pixel_values"]
         batch_langs = processed_batch["langs"]
-        batch_decoder_input = [[model.config.decoder_start_token_id] + lang for lang in batch_langs]
+        batch_decoder_input = [[model.module.config.decoder_start_token_id] + lang for lang in batch_langs]
         max_input_length = max([len(tokens) for tokens in batch_decoder_input])
 
         # Pad decoder input to max length if needed, to ensure we can convert to a tensor
