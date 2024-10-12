@@ -38,9 +38,9 @@ def load_model(checkpoint=settings.RECOGNITION_MODEL_CHECKPOINT, device=settings
 
     model = OCREncoderDecoderModel.from_pretrained(checkpoint, config=config, torch_dtype=dtype)
 
-    assert isinstance(model.module.decoder, SuryaOCRDecoder)
-    assert isinstance(model.module.encoder, DonutSwinModel)
-    assert isinstance(model.module.text_encoder, SuryaOCRTextEncoder)
+    assert isinstance(model.decoder, SuryaOCRDecoder)
+    assert isinstance(model.encoder, DonutSwinModel)
+    assert isinstance(model.text_encoder, SuryaOCRTextEncoder)
 
     #model = model.to(device)
     if device == "cuda":
