@@ -586,10 +586,10 @@ class SuryaOCRDecoder(SuryaOCRDecoderPreTrainedModel):
         self.post_init()
 
     def get_input_embeddings(self):
-        return self.model.embed_tokens
+        return self.model.module.embed_tokens
 
     def set_input_embeddings(self, value):
-        self.model.embed_tokens = value
+        self.model.module.embed_tokens = value
 
     def get_output_embeddings(self):
         return self.lm_head
@@ -598,7 +598,7 @@ class SuryaOCRDecoder(SuryaOCRDecoderPreTrainedModel):
         self.lm_head = new_embeddings
 
     def set_decoder(self, decoder):
-        self.model = decoder
+        self.model.module = decoder
 
     def get_decoder(self):
         return self.model

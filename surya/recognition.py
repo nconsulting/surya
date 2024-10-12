@@ -72,38 +72,38 @@ def batch_recognition(images: List, languages: List[List[str] | None], model, pr
 
         current_batch_size = len(batch_pixel_values)
 
-        batch_pixel_values = torch.tensor(np.stack(batch_pixel_values, axis=0), dtype=model.dtype, device=model.device)
-        batch_decoder_input = torch.tensor(np.stack(batch_decoder_input, axis=0), dtype=torch.long, device=model.device)
+        batch_pixel_values = torch.tensor(np.stack(batch_pixel_values, axis=0), dtype=model.module.dtype, device=model.module.device)
+        batch_decoder_input = torch.tensor(np.stack(batch_decoder_input, axis=0), dtype=torch.long, device=model.module.device)
 
         token_count = 0
         inference_token_count = batch_decoder_input.shape[-1]
         batch_predictions = [[] for _ in range(current_batch_size)]
 
-        decoder_position_ids = torch.ones_like(batch_decoder_input[0, :], dtype=torch.int64, device=model.device).cumsum(0) - 1
-        model.decoder.model._setup_cache(model.config, batch_size, model.device, model.dtype)
-        model.text_encoder.model._setup_cache(model.config, batch_size, model.device, model.dtype)
+        decoder_position_ids = torch.ones_like(batch_decoder_input[0, :], dtype=torch.int64, device=model.module.device).cumsum(0) - 1
+        model.module.decoder.model._setup_cache(model.module.config, batch_size, model.module.device, model.module.dtype)
+        model.module.text_encoder.model._setup_cache(model.module.config, batch_size, model.module.device, model.module.dtype)
 
         sequence_scores = None
-        all_done = torch.zeros(current_batch_size, dtype=torch.bool, device=model.device)
+        all_done = torch.zeros(current_batch_size, dtype=torch.bool, device=model.module.device)
         encoder_hidden_states = None
 
         with torch.no_grad(): # inference_mode doesn't work with torch.compile
             encoder_batch_size = batch_size // settings.RECOGNITION_ENCODER_BATCH_DIVISOR + 1
             for z in range(0, batch_pixel_values.shape[0], encoder_batch_size):
                 encoder_pixel_values = batch_pixel_values[z:min(z + encoder_batch_size, batch_pixel_values.shape[0])]
-                encoder_hidden_states_batch = model.encoder(pixel_values=encoder_pixel_values).last_hidden_state
+                encoder_hidden_states_batch = model.module.encoder(pixel_values=encoder_pixel_values).last_hidden_state
                 if encoder_hidden_states is None:
                     encoder_hidden_states = encoder_hidden_states_batch
                 else:
                     encoder_hidden_states = torch.cat([encoder_hidden_states, encoder_hidden_states_batch], dim=0)
 
             text_encoder_input_ids = torch.arange(
-                model.text_encoder.config.query_token_count,
+                model.module.text_encoder.config.query_token_count,
                 device=encoder_hidden_states.device,
                 dtype=torch.long
             ).unsqueeze(0).expand(encoder_hidden_states.size(0), -1)
 
-            encoder_text_hidden_states = model.text_encoder(
+            encoder_text_hidden_states = model.module.text_encoder(
                 input_ids=text_encoder_input_ids,
                 cache_position=None,
                 attention_mask=None,
@@ -121,7 +121,7 @@ def batch_recognition(images: List, languages: List[List[str] | None], model, pr
             while token_count < settings.RECOGNITION_MAX_TOKENS - 1:
                 is_prefill = token_count == 0
                 #TODO: add attention mask
-                return_dict = model.decoder(
+                return_dict = model.module.decoder(
                     input_ids=batch_decoder_input,
                     encoder_hidden_states=encoder_text_hidden_states,
                     cache_position=decoder_position_ids,
@@ -157,7 +157,7 @@ def batch_recognition(images: List, languages: List[List[str] | None], model, pr
                 token_count += inference_token_count
                 inference_token_count = batch_decoder_input.shape[-1]
                 max_position_id = torch.max(decoder_position_ids).item()
-                decoder_position_ids = torch.ones_like(batch_decoder_input[0, :], dtype=torch.int64, device=model.device).cumsum(0) - 1 + max_position_id
+                decoder_position_ids = torch.ones_like(batch_decoder_input[0, :], dtype=torch.int64, device=model.module.device).cumsum(0) - 1 + max_position_id
 
                 if settings.RECOGNITION_STATIC_CACHE:
                     batch_decoder_input = pad_to_batch_size(batch_decoder_input, batch_size)

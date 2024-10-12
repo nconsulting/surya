@@ -53,16 +53,16 @@ def batch_ordering(images: List, bboxes: List[List[List[float]]], model: OrderVi
         batch_bbox_mask = model_inputs["input_boxes_mask"]
         batch_bbox_counts = model_inputs["input_boxes_counts"]
 
-        batch_bboxes = torch.from_numpy(np.array(batch_bboxes, dtype=np.int32)).to(model.device)
-        batch_bbox_mask = torch.from_numpy(np.array(batch_bbox_mask, dtype=np.int32)).to(model.device)
-        batch_pixel_values = torch.tensor(np.array(batch_pixel_values), dtype=model.dtype).to(model.device)
-        batch_bbox_counts = torch.tensor(np.array(batch_bbox_counts), dtype=torch.long).to(model.device)
+        batch_bboxes = torch.from_numpy(np.array(batch_bboxes, dtype=np.int32)).to(model.module.device)
+        batch_bbox_mask = torch.from_numpy(np.array(batch_bbox_mask, dtype=np.int32)).to(model.module.device)
+        batch_pixel_values = torch.tensor(np.array(batch_pixel_values), dtype=model.module.dtype).to(model.module.device)
+        batch_bbox_counts = torch.tensor(np.array(batch_bbox_counts), dtype=torch.long).to(model.module.device)
 
         token_count = 0
         past_key_values = None
         encoder_outputs = None
         batch_predictions = [[] for _ in range(len(batch_images))]
-        done = torch.zeros(len(batch_images), dtype=torch.bool, device=model.device)
+        done = torch.zeros(len(batch_images), dtype=torch.bool, device=model.module.device)
 
         with torch.inference_mode():
             while token_count < settings.ORDER_MAX_BOXES:
@@ -78,7 +78,7 @@ def batch_ordering(images: List, bboxes: List[List[List[float]]], model: OrderVi
 
                 last_tokens = []
                 last_token_mask = []
-                min_val = torch.finfo(model.dtype).min
+                min_val = torch.finfo(model.module.dtype).min
                 for j in range(logits.shape[0]):
                     label_count = batch_bbox_counts[j, 1] - batch_bbox_counts[j, 0] - 1  # Subtract 1 for the sep token
                     new_logits = logits[j, -1]
@@ -104,8 +104,8 @@ def batch_ordering(images: List, bboxes: List[List[List[float]]], model: OrderVi
                 past_key_values = return_dict["past_key_values"]
                 encoder_outputs = (return_dict["encoder_last_hidden_state"],)
 
-                batch_bboxes = torch.tensor(last_tokens, dtype=torch.long).to(model.device)
-                token_bbox_mask = torch.tensor(last_token_mask, dtype=torch.long).to(model.device)
+                batch_bboxes = torch.tensor(last_tokens, dtype=torch.long).to(model.module.device)
+                token_bbox_mask = torch.tensor(last_token_mask, dtype=torch.long).to(model.module.device)
                 batch_bbox_mask = torch.cat([batch_bbox_mask, token_bbox_mask], dim=1)
                 token_count += 1
 

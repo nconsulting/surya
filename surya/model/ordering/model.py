@@ -25,8 +25,8 @@ def load_model(checkpoint=settings.ORDER_MODEL_CHECKPOINT, device=settings.TORCH
     AutoModel.register(VariableDonutSwinConfig, VariableDonutSwinModel)
 
     model = OrderVisionEncoderDecoderModel.from_pretrained(checkpoint, config=config, torch_dtype=dtype)
-    assert isinstance(model.decoder, MBartOrder)
-    assert isinstance(model.encoder, VariableDonutSwinModel)
+    assert isinstance(model.module.decoder, MBartOrder)
+    assert isinstance(model.module.encoder, VariableDonutSwinModel)
 
     #model = model.to(device)
     if device == "cuda":

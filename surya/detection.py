@@ -68,7 +68,7 @@ def batch_detection(images: List, model: EfficientViTForSemanticSegmentation, pr
 
         image_splits = [prepare_image_detection(image, processor) for image in image_splits]
         # Batch images in dim 0
-        batch = torch.stack(image_splits, dim=0).to(model.dtype).to(model.device)
+        batch = torch.stack(image_splits, dim=0).to(model.module.dtype).to(model.module.device)
 
         with torch.inference_mode():
             pred = model(pixel_values=batch)
